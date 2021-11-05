@@ -1,0 +1,60 @@
+pipeline{
+agent any
+parameters {
+  string(name: 'environment', defaultValue: '',, description: 'Please select the environment')
+  string(name: 'name', defaultValue: '',, description: 'Please select the name')
+  string(name: 'deploy', defaultValue: '', description: 'Please select the deploy')
+}
+
+stages{
+   stage("verification"){
+    steps{
+	 script{
+	 echo "${params.name}"
+	 echo "${params.environment}"
+	 echo "${params.deploy}"
+
+	 }
+	}
+   } 
+ stage("Deployement"){
+    //when {
+	   
+	   //expression {params.environment == "Dev" && params.deploy == "true"}
+	   
+	     //   } 
+    steps{
+     script{
+    echo "Deployement started"
+	sh "ssh root@204.236.157.51 /opt/tomcat/bin/shutdown.sh"
+    sh "scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/continous-integration/target/psdapp.war root@204.236.157.51:/opt/tomcat/webapps"
+    sh "ssh root@204.236.157.51 /opt/tomcat/bin/startup.sh" 
+    echo "Deployement completed"
+    }
+   }
+post {
+    success {
+        mail to: 'naveentanish20@gmail.com',
+             subject: "success Pipeline: ${currentBuild.fullDisplayName}",
+             body: "Build is succesfull and find the build number ${env.BUILD_URL}"
+    }
+	
+failure {
+        mail to: 'naveentanish20@gmail.com',
+             subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+             body: "Something is wrong with ${env.BUILD_URL}"
+    }	
+	
+always {
+        mail to: 'naveentanish20@gmail.com',
+             subject: "Pipeline: ${currentBuild.fullDisplayName}",
+             body: "this is always"
+    }	
+	
+	
+}    
+  } 
+ 
+ }
+}
+

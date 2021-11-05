@@ -1,0 +1,80 @@
+pipeline{
+agent any
+parameters {
+  string(name: 'name',defaultValue: 'master', description: 'Please select the name')
+  choice(name: 'environment', choices: ['UAT', 'master', 'Dev', 'QA'], description: 'Please select the environment')
+  booleanParam(name: 'deploy', description: 'Please select the deploy')
+}
+  stages{
+   stage("SCM"){
+    steps{
+     script{
+     echo "Cloning started"
+	 git branch: '$environment', credentialsId: 'naveen_github', url: 'https://github.com/naveen5758/sampletest.git'
+     echo "Cloning completed"
+    }
+   }
+  }
+    stage("Build"){
+    steps{
+     script{
+    echo "Build started"
+	 sh 'mvn clean package'
+	 echo "${params.environment}"
+    echo "Build completed"
+    }
+   }
+   post {
+       success{
+	    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+	   }
+
+
+}
+  }
+  
+   stage("sonarqube"){
+    steps{
+     script{
+     echo "sonarqube started"
+	 
+    echo "sonarqube completed"
+    }
+   }
+  }  
+   stage("Nexus"){
+    steps{
+     script{
+     echo "Nexus started"
+	 
+    echo "Nexus completed"
+    }
+   }
+  } 
+   stage("Verification"){
+    steps{
+     script{
+    echo "Verification started"
+	
+	echo "${params.environment}"
+	echo "${params.deploy}"	
+	
+    echo "Verification completed"
+    }
+   }
+  }   
+   stage("calling-job"){
+    steps{
+     script{
+    echo "calling started"
+    build(job: "continous-deployement", parameters: [string(name: 'environment', value:"${params.environment}"),
+	string(name: 'name', value:"${params.name}"),
+	string(name: 'deploy', value:"${params.deploy}")
+	])	
+    echo "calling completed completed"
+    }
+   }
+  }       
+ }
+}
+
